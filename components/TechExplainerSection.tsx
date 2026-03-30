@@ -160,16 +160,16 @@ function LargeTimeline() {
 
   const blockStyle = (type: string) => {
     if (type === "js") return "bg-white/[0.07] border-white/[0.06]";
-    if (type === "reflow") return "bg-red-950/80 border-red-900/40";
-    if (type === "prepare") return "bg-white/[0.14] border-white/[0.12]";
-    if (type === "layout") return "bg-white/[0.06] border-white/[0.05]";
+    if (type === "reflow") return "bg-red-500/[0.12] border-red-500/[0.20]";
+    if (type === "prepare") return "bg-amber-500/[0.12] border-amber-500/[0.20]";
+    if (type === "layout") return "bg-blue-500/[0.10] border-blue-500/[0.18]";
     return "bg-white/5";
   };
 
   const textStyle = (type: string) => {
-    if (type === "reflow") return "text-red-400/90 font-medium text-[10px]";
-    if (type === "layout") return "text-white/50 font-medium text-[8px]";
-    if (type === "prepare") return "text-white/60 text-[9px]";
+    if (type === "reflow") return "text-red-400 font-medium text-[10px]";
+    if (type === "layout") return "text-blue-400/80 text-[8px]";
+    if (type === "prepare") return "text-amber-400/80 text-[9px]";
     return "text-white/25 text-[9px]";
   };
 
@@ -177,7 +177,7 @@ function LargeTimeline() {
     <div ref={ref} className="space-y-8">
       {/* DOM timeline */}
       <div>
-        <div className="mono text-xs text-white/25 uppercase tracking-widest mb-3">
+        <div className="mono text-xs text-white/40 uppercase tracking-widest mb-3">
           Without Pretext — DOM measurements
         </div>
         <div className="flex h-12 gap-0.5 items-stretch overflow-hidden rounded-lg min-h-[48px]">
@@ -206,7 +206,7 @@ function LargeTimeline() {
             <motion.span
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 1.4, repeat: Infinity }}
-              className="mono text-sm text-white/20"
+              className="mono text-sm text-white/25"
             >
               ···
             </motion.span>
@@ -219,7 +219,7 @@ function LargeTimeline() {
 
       {/* Pretext timeline */}
       <div>
-        <div className="mono text-xs text-white/25 uppercase tracking-widest mb-3">
+        <div className="mono text-xs text-white/40 uppercase tracking-widest mb-3">
           With Pretext — main thread stays free
         </div>
         <div className="flex h-12 gap-0.5 items-stretch overflow-hidden rounded-lg min-h-[48px]">
@@ -249,30 +249,30 @@ function LargeTimeline() {
       <div className="flex gap-5 flex-wrap pt-2">
         {[
           { color: "bg-white/[0.07]", label: "JavaScript execution" },
-          { color: "bg-red-950/80 border border-red-900/40", label: "DOM reflow (blocking)" },
-          { color: "bg-white/[0.14]", label: "prepare() — runs once" },
-          { color: "bg-white/[0.06]", label: "layout() — instant" },
+          { color: "bg-red-500/[0.12] border border-red-500/[0.20]", label: "DOM reflow (blocking)" },
+          { color: "bg-amber-500/[0.12] border border-amber-500/[0.20]", label: "prepare() — runs once" },
+          { color: "bg-blue-500/[0.10] border border-blue-500/[0.18]", label: "layout() — instant" },
         ].map(({ color, label }) => (
           <div key={label} className="flex items-center gap-2">
             <div className={`w-4 h-4 rounded-sm ${color}`} />
-            <span className="mono text-xs text-white/35">{label}</span>
+            <span className="mono text-xs text-white/40">{label}</span>
           </div>
         ))}
       </div>
 
       {/* Cost comparison */}
       <div className="grid sm:grid-cols-2 gap-4 pt-2">
-        <div className="bg-white/[0.03] border border-white/10 rounded-xl p-5">
+        <div className="bg-red-500/[0.07] border border-red-500/[0.15] rounded-xl p-5">
           <div className="mono text-sm font-semibold text-white/70">
-            100 items × 5ms = <span className="text-red-400/80">500ms</span> of blocking
+            100 items × 5ms = <span className="text-red-400">500ms</span> of blocking
           </div>
           <div className="mono text-xs text-white/35 mt-1">
             Half a second where your UI is completely frozen
           </div>
         </div>
-        <div className="bg-white/[0.03] border border-white/10 rounded-xl p-5">
+        <div className="bg-blue-500/[0.07] border border-blue-500/[0.15] rounded-xl p-5">
           <div className="mono text-sm font-semibold text-white/70">
-            100 items × 0.001ms = <span className="text-white/90">0.1ms</span> total
+            100 items × 0.001ms = <span className="text-blue-400">0.1ms</span> total
           </div>
           <div className="mono text-xs text-white/35 mt-1">
             5000× faster — imperceptible to the user
@@ -297,9 +297,9 @@ function ArchCards() {
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.1, duration: 0.5 }}
-          className="bg-white/[0.03] border border-white/[0.10] rounded-2xl p-8"
+          className="bg-amber-500/[0.05] border border-amber-500/[0.15] rounded-2xl p-8"
         >
-          <div className="mono text-xs text-white/30 uppercase tracking-widest mb-5">
+          <div className="mono text-xs text-amber-400/60 uppercase tracking-widest mb-5">
             Phase 1 — prepare()
           </div>
           <div className="space-y-3">
@@ -330,10 +330,10 @@ function ArchCards() {
                 initial={{ opacity: 0, x: -16 }}
                 animate={inView ? { opacity: 1, x: 0 } : {}}
                 transition={{ delay: 0.2 + i * 0.1, duration: 0.4 }}
-                className="border border-white/[0.08] bg-white/[0.03] rounded-xl px-4 py-3"
+                className="border border-amber-500/[0.12] bg-amber-500/[0.05] rounded-xl px-4 py-3"
               >
                 <div className="flex items-center gap-2.5 mb-1">
-                  <span className="mono text-[10px] text-white/20 font-medium tabular-nums">{num}</span>
+                  <span className="mono text-[10px] text-amber-400/30 font-medium tabular-nums">{num}</span>
                   <span className="mono text-sm font-medium text-white/75">{step}</span>
                 </div>
                 <p className="mono text-sm text-white/40 leading-relaxed pl-[26px]">{desc}</p>
@@ -344,9 +344,9 @@ function ArchCards() {
             initial={{ opacity: 0 }}
             animate={inView ? { opacity: 1 } : {}}
             transition={{ delay: 0.7 }}
-            className="mono text-xs text-white/25 mt-5 flex items-center gap-2"
+            className="mono text-xs text-amber-400/50 mt-5 flex items-center gap-2"
           >
-            <span className="w-1 h-1 bg-white/25 rounded-full" />
+            <span className="w-1 h-1 bg-amber-400/50 rounded-full" />
             cost: ~1ms · runs once per text+font combo
           </motion.div>
         </motion.div>
@@ -369,9 +369,9 @@ function ArchCards() {
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.25, duration: 0.5 }}
-          className="bg-white/[0.03] border border-white/[0.10] rounded-2xl p-8"
+          className="bg-blue-500/[0.05] border border-blue-500/[0.15] rounded-2xl p-8"
         >
-          <div className="mono text-xs text-white/30 uppercase tracking-widest mb-5">
+          <div className="mono text-xs text-blue-400/60 uppercase tracking-widest mb-5">
             Phase 2 — layout()
           </div>
           <div className="space-y-3">
@@ -402,10 +402,10 @@ function ArchCards() {
                 initial={{ opacity: 0, x: 16 }}
                 animate={inView ? { opacity: 1, x: 0 } : {}}
                 transition={{ delay: 0.35 + i * 0.1, duration: 0.4 }}
-                className="border border-white/[0.08] bg-white/[0.03] rounded-xl px-4 py-3"
+                className="border border-blue-500/[0.12] bg-blue-500/[0.05] rounded-xl px-4 py-3"
               >
                 <div className="flex items-center gap-2.5 mb-1">
-                  <span className="mono text-[10px] text-white/20 font-medium tabular-nums">{num}</span>
+                  <span className="mono text-[10px] text-blue-400/30 font-medium tabular-nums">{num}</span>
                   <span className="mono text-sm font-medium text-white/75">{step}</span>
                 </div>
                 <p className="mono text-sm text-white/40 leading-relaxed pl-[26px]">{desc}</p>
@@ -416,9 +416,9 @@ function ArchCards() {
             initial={{ opacity: 0 }}
             animate={inView ? { opacity: 1 } : {}}
             transition={{ delay: 0.85 }}
-            className="mono text-xs text-white/25 mt-5 flex items-center gap-2"
+            className="mono text-xs text-blue-400/50 mt-5 flex items-center gap-2"
           >
-            <span className="w-1 h-1 bg-white/25 rounded-full" />
+            <span className="w-1 h-1 bg-blue-400/50 rounded-full" />
             cost: ~0.001ms · call at any width, instantly
           </motion.div>
         </motion.div>
@@ -487,11 +487,11 @@ function TwoPhaseVisual() {
         initial={{ opacity: 0, y: 16 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.5 }}
-        className="rounded-2xl overflow-hidden border border-white/[0.10] bg-white/[0.03]"
+        className="rounded-2xl overflow-hidden border border-amber-500/[0.18] bg-amber-500/[0.04]"
       >
         {/* Header bar */}
-        <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.07]">
-          <span className="w-1.5 h-1.5 rounded-full bg-white/25 shrink-0" />
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-amber-500/[0.12]">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-400/50 shrink-0" />
           <code className="mono text-sm text-white/70">
             prepare<span className="text-white/35">(</span>
             <span className="text-white/55">&quot;Hello world!&quot;</span>
@@ -499,7 +499,7 @@ function TwoPhaseVisual() {
             <span className="text-white/55">&quot;16px Arial&quot;</span>
             <span className="text-white/35">)</span>
           </code>
-          <span className="ml-auto mono text-[10px] text-white/25 uppercase tracking-widest shrink-0">
+          <span className="ml-auto mono text-[10px] text-amber-400/40 uppercase tracking-widest shrink-0">
             runs once
           </span>
         </div>
@@ -507,7 +507,7 @@ function TwoPhaseVisual() {
         <div className="p-5 space-y-5">
           {/* Annotation */}
           <p className="mono text-xs text-white/35 leading-relaxed">
-            Calls <span className="text-white/60">canvas.measureText()</span> for each character —
+            Calls <span className="text-amber-300/70">canvas.measureText()</span> for each character —
             stores the pixel width in a <span className="text-white/55">widths[]</span> array.
             This is the only time a canvas is touched.
           </p>
@@ -525,7 +525,7 @@ function TwoPhaseVisual() {
                   <motion.div
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mono text-[9px] text-white/40 bg-white/[0.07] border border-white/[0.10] rounded px-1"
+                    className="mono text-[9px] text-amber-400/60 bg-amber-500/[0.08] border border-amber-500/[0.15] rounded px-1"
                   >
                     measuring
                   </motion.div>
@@ -533,7 +533,7 @@ function TwoPhaseVisual() {
                 <div
                   className={`w-9 h-9 rounded-lg border flex items-center justify-center mono text-sm font-medium transition-colors ${
                     i <= prepareStep
-                      ? "bg-white/[0.08] border-white/[0.15] text-white/80"
+                      ? "bg-amber-500/[0.10] border-amber-500/[0.20] text-amber-200/80"
                       : "bg-white/[0.03] border-white/[0.06] text-white/20"
                   }`}
                 >
@@ -561,7 +561,7 @@ function TwoPhaseVisual() {
               className="flex items-center gap-3 flex-wrap bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3"
             >
               <span className="mono text-xs text-white/30">widths[] =</span>
-              <code className="mono text-xs text-white/60">
+              <code className="mono text-xs text-amber-200/70">
                 [{DEMO_WIDTHS.join(", ")}]
               </code>
               <span className="mono text-[10px] text-white/25 ml-auto flex items-center gap-1.5 shrink-0">
@@ -595,11 +595,11 @@ function TwoPhaseVisual() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="rounded-2xl overflow-hidden border border-white/[0.10] bg-white/[0.03]"
+          className="rounded-2xl overflow-hidden border border-blue-500/[0.18] bg-blue-500/[0.04]"
         >
           {/* Header bar */}
-          <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.07]">
-            <span className="w-1.5 h-1.5 rounded-full bg-white/25 shrink-0" />
+          <div className="flex items-center gap-3 px-5 py-3 border-b border-blue-500/[0.12]">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400/50 shrink-0" />
             <code className="mono text-sm text-white/70">
               layout<span className="text-white/35">(</span>
               p
@@ -609,14 +609,14 @@ function TwoPhaseVisual() {
               lineHeight<span className="text-white/35">=</span>{DEMO_LINE_H}
               <span className="text-white/35">)</span>
             </code>
-            <span className="ml-auto mono text-[10px] text-white/25 uppercase tracking-widest shrink-0">
+            <span className="ml-auto mono text-[10px] text-blue-400/40 uppercase tracking-widest shrink-0">
               pure arithmetic
             </span>
           </div>
 
           <div className="p-5 space-y-5">
             <p className="mono text-xs text-white/35 leading-relaxed">
-              Walks <span className="text-white/55">widths[]</span> left→right, accumulating a
+              Walks <span className="text-blue-300/70">widths[]</span> left→right, accumulating a
               running sum. When <span className="text-white/55">sum &gt; maxWidth</span>,
               reset to 0 and start a new line. No canvas. No DOM.
             </p>
@@ -644,8 +644,8 @@ function TwoPhaseVisual() {
                     <div
                       className={`px-2 py-1.5 rounded-lg border flex flex-col items-center gap-0.5 min-w-[36px] ${
                         s.willBreak
-                          ? "bg-red-950/60 border-red-900/30 text-red-400/80"
-                          : "bg-white/[0.06] border-white/[0.10] text-white/70"
+                          ? "bg-red-500/[0.10] border-red-500/[0.18] text-red-300/80"
+                          : "bg-blue-500/[0.07] border-blue-500/[0.15] text-blue-200/70"
                       }`}
                     >
                       <span className="mono text-sm font-medium">
@@ -707,10 +707,10 @@ function TwoPhaseVisual() {
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between flex-wrap gap-4 bg-white/[0.04] border border-white/[0.10] rounded-xl px-5 py-4"
+                className="flex items-center justify-between flex-wrap gap-4 bg-blue-500/[0.07] border border-blue-500/[0.15] rounded-xl px-5 py-4"
               >
                 <code className="mono text-sm text-white/65">
-                  returns {"{ "}lineCount: <span className="text-white/85">2</span>, height: <span className="text-white/85">48</span>{" }"}
+                  returns {"{ "}lineCount: <span className="text-blue-300/90">2</span>, height: <span className="text-blue-300/90">48</span>{" }"}
                 </code>
                 <span className="mono text-xs text-white/25">
                   // 2 × {DEMO_LINE_H}px — no reflow, no DOM
