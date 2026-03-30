@@ -159,25 +159,25 @@ function LargeTimeline() {
   ];
 
   const blockStyle = (type: string) => {
-    if (type === "js") return "bg-blue-500/40 border-blue-400/20";
-    if (type === "reflow") return "bg-red-500/60 border-red-400/30";
-    if (type === "prepare") return "bg-purple-500/50 border-purple-400/30";
-    if (type === "layout") return "bg-green-500/60 border-green-400/30";
-    return "bg-white/10";
+    if (type === "js") return "bg-white/[0.07] border-white/[0.06]";
+    if (type === "reflow") return "bg-red-950/80 border-red-900/40";
+    if (type === "prepare") return "bg-white/[0.14] border-white/[0.12]";
+    if (type === "layout") return "bg-white/[0.06] border-white/[0.05]";
+    return "bg-white/5";
   };
 
   const textStyle = (type: string) => {
-    if (type === "reflow") return "text-red-200 font-bold text-[10px]";
-    if (type === "layout") return "text-green-200 font-bold text-[8px]";
-    if (type === "prepare") return "text-purple-200 text-[9px]";
-    return "text-blue-200/50 text-[9px]";
+    if (type === "reflow") return "text-red-400/90 font-medium text-[10px]";
+    if (type === "layout") return "text-white/50 font-medium text-[8px]";
+    if (type === "prepare") return "text-white/60 text-[9px]";
+    return "text-white/25 text-[9px]";
   };
 
   return (
     <div ref={ref} className="space-y-8">
       {/* DOM timeline */}
       <div>
-        <div className="mono text-xs text-red-400/70 uppercase tracking-widest mb-3">
+        <div className="mono text-xs text-white/25 uppercase tracking-widest mb-3">
           Without Pretext — DOM measurements
         </div>
         <div className="flex h-12 gap-0.5 items-stretch overflow-hidden rounded-lg min-h-[48px]">
@@ -206,7 +206,7 @@ function LargeTimeline() {
             <motion.span
               animate={{ opacity: [0.4, 1, 0.4] }}
               transition={{ duration: 1.4, repeat: Infinity }}
-              className="mono text-sm text-red-400/60"
+              className="mono text-sm text-white/20"
             >
               ···
             </motion.span>
@@ -219,7 +219,7 @@ function LargeTimeline() {
 
       {/* Pretext timeline */}
       <div>
-        <div className="mono text-xs text-green-400/70 uppercase tracking-widest mb-3">
+        <div className="mono text-xs text-white/25 uppercase tracking-widest mb-3">
           With Pretext — main thread stays free
         </div>
         <div className="flex h-12 gap-0.5 items-stretch overflow-hidden rounded-lg min-h-[48px]">
@@ -248,33 +248,33 @@ function LargeTimeline() {
       {/* Legend */}
       <div className="flex gap-5 flex-wrap pt-2">
         {[
-          { color: "bg-blue-500/40", label: "JavaScript execution" },
-          { color: "bg-red-500/60", label: "DOM reflow (blocking)" },
-          { color: "bg-purple-500/50", label: "prepare() — runs once" },
-          { color: "bg-green-500/60", label: "layout() — instant" },
+          { color: "bg-white/[0.07]", label: "JavaScript execution" },
+          { color: "bg-red-950/80 border border-red-900/40", label: "DOM reflow (blocking)" },
+          { color: "bg-white/[0.14]", label: "prepare() — runs once" },
+          { color: "bg-white/[0.06]", label: "layout() — instant" },
         ].map(({ color, label }) => (
           <div key={label} className="flex items-center gap-2">
             <div className={`w-4 h-4 rounded-sm ${color}`} />
-            <span className="mono text-xs text-white/50">{label}</span>
+            <span className="mono text-xs text-white/35">{label}</span>
           </div>
         ))}
       </div>
 
       {/* Cost comparison */}
       <div className="grid sm:grid-cols-2 gap-4 pt-2">
-        <div className="bg-red-500/8 border border-red-500/20 rounded-xl p-5">
-          <div className="mono text-sm font-bold text-red-400">
-            100 items × 5ms = 500ms of blocking
+        <div className="bg-white/[0.03] border border-white/10 rounded-xl p-5">
+          <div className="mono text-sm font-semibold text-white/70">
+            100 items × 5ms = <span className="text-red-400/80">500ms</span> of blocking
           </div>
-          <div className="mono text-xs text-white/50 mt-1">
+          <div className="mono text-xs text-white/35 mt-1">
             Half a second where your UI is completely frozen
           </div>
         </div>
-        <div className="bg-green-500/8 border border-green-500/20 rounded-xl p-5">
-          <div className="mono text-sm font-bold text-green-400">
-            100 items × 0.001ms = 0.1ms total
+        <div className="bg-white/[0.03] border border-white/10 rounded-xl p-5">
+          <div className="mono text-sm font-semibold text-white/70">
+            100 items × 0.001ms = <span className="text-white/90">0.1ms</span> total
           </div>
-          <div className="mono text-xs text-white/50 mt-1">
+          <div className="mono text-xs text-white/35 mt-1">
             5000× faster — imperceptible to the user
           </div>
         </div>
@@ -297,50 +297,46 @@ function ArchCards() {
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.1, duration: 0.5 }}
-          className="bg-purple-500/5 border border-purple-500/20 rounded-2xl p-8"
+          className="bg-white/[0.03] border border-white/[0.10] rounded-2xl p-8"
         >
-          <div className="mono text-xs text-purple-400/70 uppercase tracking-widest mb-5">
+          <div className="mono text-xs text-white/30 uppercase tracking-widest mb-5">
             Phase 1 — prepare()
           </div>
           <div className="space-y-3">
             {[
               {
-                icon: "→",
+                num: "01",
                 step: "Receive text + font",
                 desc: "Takes a raw string and a CSS font string like \"16px Arial\"",
-                color: "border-purple-500/25 bg-purple-500/8",
               },
               {
-                icon: "🔤",
+                num: "02",
                 step: "Intl.Segmenter",
                 desc: "Splits the string into grapheme clusters — handles emoji, ligatures, multi-byte chars",
-                color: "border-blue-500/25 bg-blue-500/8",
               },
               {
-                icon: "📐",
+                num: "03",
                 step: "canvas.measureText()",
                 desc: "Measures each unique character's advance width using an offscreen canvas",
-                color: "border-yellow-500/25 bg-yellow-500/8",
               },
               {
-                icon: "💾",
+                num: "04",
                 step: "Cache widths[]",
                 desc: "Stores a parallel array of float widths — one per grapheme cluster",
-                color: "border-white/15 bg-white/5",
               },
-            ].map(({ icon, step, desc, color }, i) => (
+            ].map(({ num, step, desc }, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -16 }}
                 animate={inView ? { opacity: 1, x: 0 } : {}}
                 transition={{ delay: 0.2 + i * 0.1, duration: 0.4 }}
-                className={`border rounded-xl px-4 py-3 ${color}`}
+                className="border border-white/[0.08] bg-white/[0.03] rounded-xl px-4 py-3"
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-base leading-none">{icon}</span>
-                  <span className="mono text-sm font-semibold text-white/80">{step}</span>
+                <div className="flex items-center gap-2.5 mb-1">
+                  <span className="mono text-[10px] text-white/20 font-medium tabular-nums">{num}</span>
+                  <span className="mono text-sm font-medium text-white/75">{step}</span>
                 </div>
-                <p className="mono text-sm text-white/60 leading-relaxed">{desc}</p>
+                <p className="mono text-sm text-white/40 leading-relaxed pl-[26px]">{desc}</p>
               </motion.div>
             ))}
           </div>
@@ -348,9 +344,9 @@ function ArchCards() {
             initial={{ opacity: 0 }}
             animate={inView ? { opacity: 1 } : {}}
             transition={{ delay: 0.7 }}
-            className="mono text-xs text-yellow-400/60 mt-5 flex items-center gap-2"
+            className="mono text-xs text-white/25 mt-5 flex items-center gap-2"
           >
-            <span className="w-1.5 h-1.5 bg-yellow-400/60 rounded-full" />
+            <span className="w-1 h-1 bg-white/25 rounded-full" />
             cost: ~1ms · runs once per text+font combo
           </motion.div>
         </motion.div>
@@ -373,50 +369,46 @@ function ArchCards() {
           initial={{ opacity: 0, y: 24 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.25, duration: 0.5 }}
-          className="bg-green-500/5 border border-green-500/20 rounded-2xl p-8"
+          className="bg-white/[0.03] border border-white/[0.10] rounded-2xl p-8"
         >
-          <div className="mono text-xs text-green-400/70 uppercase tracking-widest mb-5">
+          <div className="mono text-xs text-white/30 uppercase tracking-widest mb-5">
             Phase 2 — layout()
           </div>
           <div className="space-y-3">
             {[
               {
-                icon: "📖",
+                num: "01",
                 step: "Read PreparedText",
                 desc: "Takes the opaque PreparedText handle — no DOM access, no remeasuring",
-                color: "border-green-500/25 bg-green-500/8",
               },
               {
-                icon: "➕",
+                num: "02",
                 step: "Sum widths left→right",
                 desc: "Walks the widths[] array, accumulating a running total — pure addition",
-                color: "border-green-500/25 bg-green-500/8",
               },
               {
-                icon: "↵",
+                num: "03",
                 step: "Line break check",
                 desc: "When running total > maxWidth, reset to 0 and increment lineCount",
-                color: "border-green-500/25 bg-green-500/8",
               },
               {
-                icon: "📦",
+                num: "04",
                 step: "Return { lineCount, height }",
                 desc: "height = lineCount × lineHeight — two numbers, no layout engine needed",
-                color: "border-white/15 bg-white/5",
               },
-            ].map(({ icon, step, desc, color }, i) => (
+            ].map(({ num, step, desc }, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: 16 }}
                 animate={inView ? { opacity: 1, x: 0 } : {}}
                 transition={{ delay: 0.35 + i * 0.1, duration: 0.4 }}
-                className={`border rounded-xl px-4 py-3 ${color}`}
+                className="border border-white/[0.08] bg-white/[0.03] rounded-xl px-4 py-3"
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-base leading-none">{icon}</span>
-                  <span className="mono text-sm font-semibold text-white/80">{step}</span>
+                <div className="flex items-center gap-2.5 mb-1">
+                  <span className="mono text-[10px] text-white/20 font-medium tabular-nums">{num}</span>
+                  <span className="mono text-sm font-medium text-white/75">{step}</span>
                 </div>
-                <p className="mono text-sm text-white/60 leading-relaxed">{desc}</p>
+                <p className="mono text-sm text-white/40 leading-relaxed pl-[26px]">{desc}</p>
               </motion.div>
             ))}
           </div>
@@ -424,9 +416,9 @@ function ArchCards() {
             initial={{ opacity: 0 }}
             animate={inView ? { opacity: 1 } : {}}
             transition={{ delay: 0.85 }}
-            className="mono text-xs text-green-400/60 mt-5 flex items-center gap-2"
+            className="mono text-xs text-white/25 mt-5 flex items-center gap-2"
           >
-            <span className="w-1.5 h-1.5 bg-green-400/60 rounded-full" />
+            <span className="w-1 h-1 bg-white/25 rounded-full" />
             cost: ~0.001ms · call at any width, instantly
           </motion.div>
         </motion.div>
@@ -442,11 +434,7 @@ const DEMO_WIDTHS = [11, 8, 4, 4, 9, 4, 12, 9, 5, 4, 9, 4];
 const DEMO_MAX_W = 44;
 const DEMO_LINE_H = 24;
 
-const CHAR_TOKEN_COLORS = [
-  "text-blue-300","text-purple-300","text-yellow-300","text-orange-300",
-  "text-pink-300","text-cyan-300","text-green-300","text-red-300",
-  "text-indigo-300","text-teal-300","text-rose-300","text-amber-300",
-];
+// Characters use a single neutral color — the structure communicates, not the hue
 
 function TwoPhaseVisual() {
   const ref = useRef<HTMLDivElement>(null);
@@ -499,32 +487,29 @@ function TwoPhaseVisual() {
         initial={{ opacity: 0, y: 16 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.5 }}
-        className="rounded-2xl overflow-hidden border border-purple-500/25"
-        style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(0,0,0,0) 100%)" }}
+        className="rounded-2xl overflow-hidden border border-white/[0.10] bg-white/[0.03]"
       >
         {/* Header bar */}
-        <div className="flex items-center gap-3 px-5 py-3 border-b border-purple-500/15">
-          <span className="w-2 h-2 rounded-full bg-purple-400/70 shrink-0" />
-          <code className="mono text-sm text-purple-200">
-            prepare<span className="text-white/50">(</span>
-            <span className="text-[#c3e88d]">&quot;Hello world!&quot;</span>
-            <span className="text-white/50">, </span>
-            <span className="text-[#c3e88d]">&quot;16px Arial&quot;</span>
-            <span className="text-white/50">)</span>
+        <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.07]">
+          <span className="w-1.5 h-1.5 rounded-full bg-white/25 shrink-0" />
+          <code className="mono text-sm text-white/70">
+            prepare<span className="text-white/35">(</span>
+            <span className="text-white/55">&quot;Hello world!&quot;</span>
+            <span className="text-white/35">, </span>
+            <span className="text-white/55">&quot;16px Arial&quot;</span>
+            <span className="text-white/35">)</span>
           </code>
-          <span className="ml-auto mono text-[10px] text-purple-400/60 uppercase tracking-widest shrink-0">
+          <span className="ml-auto mono text-[10px] text-white/25 uppercase tracking-widest shrink-0">
             runs once
           </span>
         </div>
 
         <div className="p-5 space-y-5">
           {/* Annotation */}
-          <p className="mono text-xs text-white/40 leading-relaxed">
-            Calls{" "}
-            <span className="text-purple-300">canvas.measureText()</span> for each character —
-            stores the pixel width in a{" "}
-            <span className="text-white/70">widths[]</span> array. This is the only time a
-            canvas is touched.
+          <p className="mono text-xs text-white/35 leading-relaxed">
+            Calls <span className="text-white/60">canvas.measureText()</span> for each character —
+            stores the pixel width in a <span className="text-white/55">widths[]</span> array.
+            This is the only time a canvas is touched.
           </p>
 
           {/* Character grid */}
@@ -532,26 +517,25 @@ function TwoPhaseVisual() {
             {DEMO_CHARS.map((char, i) => (
               <motion.div
                 key={i}
-                animate={{ opacity: i <= prepareStep ? 1 : 0.18, scale: i === prepareStep ? 1.12 : 1 }}
+                animate={{ opacity: i <= prepareStep ? 1 : 0.18, scale: i === prepareStep ? 1.08 : 1 }}
                 transition={{ duration: 0.1 }}
                 className="flex flex-col items-center gap-1"
               >
-                {/* Canvas icon for current scanning char */}
                 {i === prepareStep && prepareStep < DEMO_CHARS.length - 1 && (
                   <motion.div
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mono text-[9px] text-purple-400/80 bg-purple-500/10 border border-purple-500/20 rounded px-1"
+                    className="mono text-[9px] text-white/40 bg-white/[0.07] border border-white/[0.10] rounded px-1"
                   >
-                    ⬛ measuring
+                    measuring
                   </motion.div>
                 )}
                 <div
-                  className={`w-9 h-9 rounded-lg border flex items-center justify-center mono text-sm font-bold transition-colors ${
+                  className={`w-9 h-9 rounded-lg border flex items-center justify-center mono text-sm font-medium transition-colors ${
                     i <= prepareStep
-                      ? "bg-purple-500/12 border-purple-400/30"
-                      : "bg-white/3 border-white/8"
-                  } ${CHAR_TOKEN_COLORS[i % CHAR_TOKEN_COLORS.length]}`}
+                      ? "bg-white/[0.08] border-white/[0.15] text-white/80"
+                      : "bg-white/[0.03] border-white/[0.06] text-white/20"
+                  }`}
                 >
                   {char === " " ? "·" : char}
                 </div>
@@ -559,7 +543,7 @@ function TwoPhaseVisual() {
                   <motion.span
                     initial={{ opacity: 0, y: 3 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mono text-[10px] text-white/45"
+                    className="mono text-[10px] text-white/35"
                   >
                     {DEMO_WIDTHS[i]}px
                   </motion.span>
@@ -574,14 +558,14 @@ function TwoPhaseVisual() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="flex items-center gap-3 flex-wrap bg-white/4 border border-white/10 rounded-xl px-4 py-3"
+              className="flex items-center gap-3 flex-wrap bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3"
             >
-              <span className="mono text-xs text-white/35">widths[] =</span>
-              <code className="mono text-xs text-purple-200/80">
+              <span className="mono text-xs text-white/30">widths[] =</span>
+              <code className="mono text-xs text-white/60">
                 [{DEMO_WIDTHS.join(", ")}]
               </code>
-              <span className="mono text-[10px] text-purple-400/55 ml-auto flex items-center gap-1.5 shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400/55" />
+              <span className="mono text-[10px] text-white/25 ml-auto flex items-center gap-1.5 shrink-0">
+                <span className="w-1 h-1 rounded-full bg-white/25" />
                 reused for every layout() call — no re-measuring
               </span>
             </motion.div>
@@ -597,11 +581,11 @@ function TwoPhaseVisual() {
           transition={{ delay: 0.2 }}
           className="flex items-center justify-center gap-3 py-1"
         >
-          <div className="h-px flex-1 bg-gradient-to-r from-purple-500/0 to-purple-500/25" />
-          <span className="mono text-[11px] text-white/30 bg-white/5 border border-white/10 rounded-full px-3 py-1">
+          <div className="h-px flex-1 bg-white/[0.08]" />
+          <span className="mono text-[11px] text-white/25 bg-white/[0.04] border border-white/[0.08] rounded-full px-3 py-1">
             PreparedText →
           </span>
-          <div className="h-px flex-1 bg-gradient-to-r from-green-500/25 to-green-500/0" />
+          <div className="h-px flex-1 bg-white/[0.08]" />
         </motion.div>
       )}
 
@@ -611,35 +595,29 @@ function TwoPhaseVisual() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="rounded-2xl overflow-hidden border border-green-500/25"
-          style={{ background: "linear-gradient(135deg, rgba(34,197,94,0.05) 0%, rgba(0,0,0,0) 100%)" }}
+          className="rounded-2xl overflow-hidden border border-white/[0.10] bg-white/[0.03]"
         >
           {/* Header bar */}
-          <div className="flex items-center gap-3 px-5 py-3 border-b border-green-500/15">
-            <span className="w-2 h-2 rounded-full bg-green-400/70 shrink-0" />
-            <code className="mono text-sm text-green-200">
-              layout<span className="text-white/50">(</span>
+          <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.07]">
+            <span className="w-1.5 h-1.5 rounded-full bg-white/25 shrink-0" />
+            <code className="mono text-sm text-white/70">
+              layout<span className="text-white/35">(</span>
               p
-              <span className="text-white/50">, </span>
-              <span className="text-[#f78c6c]">maxWidth</span>
-              <span className="text-white/50">=</span>
-              <span className="text-[#f78c6c]">{DEMO_MAX_W}</span>
-              <span className="text-white/50">, </span>
-              <span className="text-[#f78c6c]">lineHeight</span>
-              <span className="text-white/50">=</span>
-              <span className="text-[#f78c6c]">{DEMO_LINE_H}</span>
-              <span className="text-white/50">)</span>
+              <span className="text-white/35">, </span>
+              maxWidth<span className="text-white/35">=</span>{DEMO_MAX_W}
+              <span className="text-white/35">, </span>
+              lineHeight<span className="text-white/35">=</span>{DEMO_LINE_H}
+              <span className="text-white/35">)</span>
             </code>
-            <span className="ml-auto mono text-[10px] text-green-400/60 uppercase tracking-widest shrink-0">
+            <span className="ml-auto mono text-[10px] text-white/25 uppercase tracking-widest shrink-0">
               pure arithmetic
             </span>
           </div>
 
           <div className="p-5 space-y-5">
-            <p className="mono text-xs text-white/40 leading-relaxed">
-              Walks{" "}
-              <span className="text-green-300">widths[]</span> left→right, accumulating a
-              running sum. When <span className="text-orange-300">sum &gt; maxWidth</span>,
+            <p className="mono text-xs text-white/35 leading-relaxed">
+              Walks <span className="text-white/55">widths[]</span> left→right, accumulating a
+              running sum. When <span className="text-white/55">sum &gt; maxWidth</span>,
               reset to 0 and start a new line. No canvas. No DOM.
             </p>
 
@@ -658,7 +636,7 @@ function TwoPhaseVisual() {
                       <motion.div
                         initial={{ opacity: 0, y: -3 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mono text-[10px] text-red-400 font-bold leading-none"
+                        className="mono text-[10px] text-red-400/70 font-medium leading-none"
                       >
                         ↵ new line
                       </motion.div>
@@ -666,20 +644,18 @@ function TwoPhaseVisual() {
                     <div
                       className={`px-2 py-1.5 rounded-lg border flex flex-col items-center gap-0.5 min-w-[36px] ${
                         s.willBreak
-                          ? "bg-red-500/12 border-red-400/30"
-                          : s.runSum >= DEMO_MAX_W - 5
-                          ? "bg-orange-500/12 border-orange-400/30"
-                          : "bg-green-500/8 border-green-400/20"
+                          ? "bg-red-950/60 border-red-900/30 text-red-400/80"
+                          : "bg-white/[0.06] border-white/[0.10] text-white/70"
                       }`}
                     >
-                      <span className={`mono text-sm font-bold ${CHAR_TOKEN_COLORS[i % CHAR_TOKEN_COLORS.length]}`}>
+                      <span className="mono text-sm font-medium">
                         {s.char === " " ? "·" : s.char}
                       </span>
-                      <span className="mono text-[9px] text-white/35">{s.w}px</span>
+                      <span className="mono text-[9px] text-white/25">{s.w}px</span>
                     </div>
                     <span
-                      className={`mono text-[10px] font-semibold ${
-                        s.willBreak ? "text-red-400/80" : s.runSum >= DEMO_MAX_W - 4 ? "text-orange-300/80" : "text-green-300/70"
+                      className={`mono text-[10px] font-medium ${
+                        s.willBreak ? "text-red-400/60" : "text-white/35"
                       }`}
                     >
                       ={s.runSum}
@@ -694,12 +670,12 @@ function TwoPhaseVisual() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex items-center gap-3 mono text-xs"
+                className="flex items-center gap-3 mono text-xs text-white/35"
               >
-                <span className="text-white/30">w(12) →</span>
-                <span className="text-orange-300 font-semibold">40 + 12 = 52</span>
-                <span className="text-red-400/80 font-bold">52 &gt; {DEMO_MAX_W} !</span>
-                <span className="text-red-400/60">↵ line break here</span>
+                <span>w(12) →</span>
+                <span className="text-white/60 font-medium">40 + 12 = 52</span>
+                <span className="text-red-400/70 font-medium">52 &gt; {DEMO_MAX_W}</span>
+                <span className="text-white/30">↵ line break</span>
               </motion.div>
             )}
 
@@ -716,12 +692,11 @@ function TwoPhaseVisual() {
                 ].map(({ n, text, px, chars }) => (
                   <div
                     key={n}
-                    className="bg-white/4 border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3"
+                    className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 flex items-center gap-3"
                   >
-                    <span className="mono text-xs text-white/30 shrink-0">line {n}</span>
-                    <code className="mono text-sm text-white/80">{text}</code>
-                    <span className="mono text-[10px] text-white/30 ml-auto shrink-0">{chars} = {px}px</span>
-                    <span className="mono text-[10px] text-green-400 shrink-0">✓</span>
+                    <span className="mono text-xs text-white/25 shrink-0">line {n}</span>
+                    <code className="mono text-sm text-white/70">{text}</code>
+                    <span className="mono text-[10px] text-white/25 ml-auto shrink-0">{chars} = {px}px</span>
                   </div>
                 ))}
               </motion.div>
@@ -732,22 +707,13 @@ function TwoPhaseVisual() {
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-between flex-wrap gap-4 bg-green-500/8 border border-green-500/20 rounded-xl px-5 py-4"
+                className="flex items-center justify-between flex-wrap gap-4 bg-white/[0.04] border border-white/[0.10] rounded-xl px-5 py-4"
               >
-                <code className="mono text-sm">
-                  <span className="text-white/45">returns </span>
-                  <span className="text-white/75">{"{ "}</span>
-                  <span className="text-[#82aaff]">lineCount</span>
-                  <span className="text-white/45">: </span>
-                  <span className="text-[#f78c6c]">2</span>
-                  <span className="text-white/60">, </span>
-                  <span className="text-[#82aaff]">height</span>
-                  <span className="text-white/45">: </span>
-                  <span className="text-[#f78c6c]">48</span>
-                  <span className="text-white/75">{" }"}</span>
+                <code className="mono text-sm text-white/65">
+                  returns {"{ "}lineCount: <span className="text-white/85">2</span>, height: <span className="text-white/85">48</span>{" }"}
                 </code>
-                <span className="mono text-xs text-green-400/60">
-                  // 2 × {DEMO_LINE_H}px — no reflow, no DOM, just math
+                <span className="mono text-xs text-white/25">
+                  // 2 × {DEMO_LINE_H}px — no reflow, no DOM
                 </span>
               </motion.div>
             )}
