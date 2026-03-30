@@ -10,6 +10,12 @@ import MasonrySection from "@/components/MasonrySection";
 import MagazineSection from "@/components/MagazineSection";
 import PerformanceSection from "@/components/PerformanceSection";
 import AboutSection from "@/components/AboutSection";
+import TypographicsPhysicsSection from "@/components/TypographicsPhysicsSection";
+import PredictiveGhostSection from "@/components/PredictiveGhostSection";
+import SeismographSection from "@/components/SeismographSection";
+import TextTerrainSection from "@/components/TextTerrainSection";
+import PrecisionScrollSection from "@/components/PrecisionScrollSection";
+import ExperimentLeaderboardSection from "@/components/ExperimentLeaderboardSection";
 
 export default function Home() {
   return (
@@ -64,7 +70,37 @@ export default function Home() {
         <PerformanceSection />
       </div>
 
-      {/* 11. About + install */}
+      {/* 11. Predictive Ghost Layout — what was impossible before */}
+      <div id="ghost">
+        <PredictiveGhostSection />
+      </div>
+
+      {/* 12. Typography Physics — sandbox experiment */}
+      <div id="physics">
+        <TypographicsPhysicsSection />
+      </div>
+
+      {/* 13. Seismograph — text DNA as waveform */}
+      <div id="seismograph">
+        <SeismographSection />
+      </div>
+
+      {/* 14. Text as Terrain — platformer game powered by pretext word widths */}
+      <div id="terrain">
+        <TextTerrainSection />
+      </div>
+
+      {/* 15. Precision Scroll — 10,000 items, pre-computed heights, zero DOM measurement */}
+      <div id="precision-scroll">
+        <PrecisionScrollSection />
+      </div>
+
+      {/* 16. Experiment Leaderboard — rated demos + winning prompt formula */}
+      <div id="experiments">
+        <ExperimentLeaderboardSection />
+      </div>
+
+      {/* About + install */}
       <div id="about">
         <AboutSection />
       </div>
