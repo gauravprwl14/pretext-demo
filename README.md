@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# pretext-demo
 
-## Getting Started
+> Interactive showcase for [@chenglou/pretext](https://github.com/chenglou/pretext) — text measurement without DOM reflow.
 
-First, run the development server:
+**Live demo → [gauravprwl14.github.io/pretext-demo](https://gauravprwl14.github.io/pretext-demo/)**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## What is pretext?
+
+`@chenglou/pretext` measures text width and line count in pure TypeScript — no `getBoundingClientRect`, no `element.scrollHeight`, no forced reflow. It's **5000× faster** than DOM measurements for lists of items.
+
+```ts
+import { prepare, layout } from "@chenglou/pretext";
+
+// Phase 1 — runs once per text+font, ~1ms
+const p = prepare("Hello world!", "16px Arial");
+
+// Phase 2 — pure arithmetic, ~0.001ms, call thousands of times
+const { lineCount, height } = layout(p, 300, 24); // maxWidth=300, lineHeight=24
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Phase 1 (`prepare`)** calls `canvas.measureText()` for each character and caches the pixel widths in an array.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Phase 2 (`layout`)** walks that array, summing widths left→right. When the running sum exceeds `maxWidth`, it starts a new line. No canvas. No DOM. Just addition.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## What's in this demo
 
-To learn more about Next.js, take a look at the following resources:
+| Section | What it shows |
+|---------|--------------|
+| **Hero** | Mouse-interactive live measurement — drag to see lineCount + height update instantly |
+| **vs DOM** | Side-by-side comparison: real DOM reflow (3–15ms blocking) vs pretext (~0.001ms) |
+| **Kinetic** | Canvas animations where pretext positions serve as physics home targets — wave, gravity, reflow modes |
+| **How It Works** | Two-phase design with animated walkthrough of the prepare/layout algorithm |
+| **Playground** | Developer scratchpad — type text, drag width handle, enable cursor mode |
+| **Use Cases** | 5 production patterns: anti-CLS typewriter, auto-fit text, chart labels, smart skeleton, notification stack |
+| **Chat Bubbles** | Pretext-measured bubble heights before render |
+| **Masonry** | Virtual scroll with pre-measured row heights |
+| **Magazine** | Responsive multi-column layout driven by pretext |
+| **Performance** | Benchmark: 100 / 1000 / 10000 items, pretext vs DOM |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Running locally
 
-## Deploy on Vercel
+```bash
+git clone https://github.com/gauravprwl14/pretext-demo
+cd pretext-demo
+npm install
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Open [http://localhost:3000](http://localhost:3000).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Tech stack
+
+- **Next.js 16** (App Router, static export)
+- **TypeScript**
+- **Tailwind CSS v4**
+- **Framer Motion**
+- **@chenglou/pretext**
+
+---
+
+## Deploy
+
+This repo auto-deploys to GitHub Pages on every push to `main` via GitHub Actions (`.github/workflows/deploy.yml`).
+
+To deploy your own fork:
+
+1. Fork this repo
+2. Go to **Settings → Pages → Source → GitHub Actions**
+3. Push to `main` — the workflow builds and deploys automatically
+
+---
+
+## License
+
+MIT
