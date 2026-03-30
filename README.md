@@ -6,6 +6,12 @@
 
 ---
 
+## Demo
+
+![Demo](public/demo/pretext-demo.gif)
+
+---
+
 ## Preview
 
 | | |
