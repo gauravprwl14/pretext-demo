@@ -331,87 +331,109 @@ function FinTile({
   }, []);
 
   return (
-    <div
-      ref={tileRef}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className={`h-full p-4 rounded-xl border relative overflow-hidden cursor-crosshair select-none transition-all duration-150 ${colorClasses[metric.status]} ${hovered ? "border-white/20" : ""}`}
-    >
-      {/* Live cursor line — follows mouse X */}
-      {hovered && (
-        <div
-          className={`absolute top-0 bottom-0 w-px opacity-60 pointer-events-none z-10 ${cursorLineColors[metric.status]}`}
-          style={{ left: `${mouseX * 100}%` }}
-        />
-      )}
+    // outer wrapper: overflow-visible so the floating panel escapes the grid cell
+    <div className="relative h-full" style={{ overflow: "visible" }}>
+      {/* The tile itself — static content only, no text clipping issues */}
+      <div
+        ref={tileRef}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className={`h-full p-4 rounded-xl border relative overflow-hidden cursor-crosshair select-none transition-all duration-150 ${colorClasses[metric.status]} ${hovered ? "border-white/20 ring-1 ring-white/10" : ""}`}
+      >
+        {/* Cursor line inside tile */}
+        {hovered && (
+          <div
+            className={`absolute top-0 bottom-0 w-px opacity-40 pointer-events-none z-10 ${cursorLineColors[metric.status]}`}
+            style={{ left: `${mouseX * 100}%` }}
+          />
+        )}
 
-      {/* maxWidth bracket indicator */}
-      {hovered && (
-        <div
-          className="absolute top-0 h-[2px] pointer-events-none z-10 opacity-40"
-          style={{
-            left: PADDING / 2,
-            width: liveMaxWidth,
-            background: "currentColor",
-          }}
-        />
-      )}
+        {/* Label */}
+        <div className="text-[10px] font-semibold tracking-[0.15em] opacity-60 mb-1">
+          {metric.label}
+        </div>
 
-      {/* Label */}
-      <div className="text-[10px] font-semibold tracking-[0.15em] opacity-60 mb-1">
-        {metric.label}
+        {/* Value */}
+        <div className="text-3xl font-bold text-white mb-0.5">{metric.value}</div>
+
+        {/* Unit */}
+        {metric.unit && (
+          <div className="text-xs opacity-50 mb-1">{metric.unit}</div>
+        )}
+
+        {/* Badge */}
+        <span
+          className={`text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded ${badgeClasses[metric.status]} inline-block`}
+        >
+          {metric.badge}
+        </span>
+
+        {/* Static description — shown when NOT hovered */}
+        {!hovered && (
+          <p className="text-[12px] leading-relaxed opacity-50 mt-2 line-clamp-3">
+            {metric.description}
+          </p>
+        )}
+
+        {/* Ref — shown when not hovered */}
+        {metric.ref && !hovered && (
+          <div className="text-[10px] opacity-25 mt-1">{metric.ref}</div>
+        )}
       </div>
 
-      {/* Value */}
-      <div className="text-3xl font-bold text-white mb-0.5">{metric.value}</div>
-
-      {/* Unit */}
-      {metric.unit && (
-        <div className="text-xs opacity-50 mb-2">{metric.unit}</div>
-      )}
-
-      {/* Badge */}
-      <span
-        className={`text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded ${badgeClasses[metric.status]} mb-2 inline-block`}
-      >
-        {metric.badge}
-      </span>
-
-      {/* Description — live pretext lines when hovered, plain paragraph otherwise */}
-      {hovered && liveLines.length > 0 ? (
-        <div className="text-[13px] leading-[18px] opacity-70">
-          {liveLines.map((line, i) => (
-            <div key={i} className="whitespace-nowrap overflow-hidden text-ellipsis">
-              {line}
+      {/* Floating overlay panel — escapes tile height, shows live pretext reflow */}
+      {hovered && liveLines.length > 0 && (
+        <div
+          className={`absolute left-0 right-0 z-50 p-4 rounded-xl border pointer-events-none ${colorClasses[metric.status]} border-white/20 shadow-2xl`}
+          style={{ top: 0 }}
+        >
+          {/* maxWidth ruler */}
+          <div className="relative h-[2px] mb-3 rounded-full bg-white/[0.06]">
+            <div
+              className="absolute left-0 top-0 h-full rounded-full bg-white/30 transition-all duration-75"
+              style={{ width: `${(liveMaxWidth / 260) * 100}%`, maxWidth: "100%" }}
+            />
+            <div className="absolute right-0 top-[-10px] text-[9px] font-mono text-white/30 tabular-nums">
+              {liveMaxWidth}px
             </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-[13px] leading-relaxed opacity-70">
-          {metric.description}
-        </p>
-      )}
-
-      {/* Ref */}
-      {metric.ref && !hovered && (
-        <div className="text-[10px] opacity-30 mt-2">{metric.ref}</div>
-      )}
-
-      {/* Live metrics overlay — shown on hover */}
-      {hovered && (
-        <div className="absolute bottom-2 right-2 flex flex-col items-end gap-0.5 pointer-events-none">
-          <div className="text-[9px] font-mono opacity-50 tabular-nums">
-            maxW {liveMaxWidth}px
           </div>
-          <div className="text-[9px] font-mono opacity-50 tabular-nums">
-            {liveLineCount} {liveLineCount === 1 ? "line" : "lines"}
+
+          {/* Label + value repeated for context */}
+          <div className="text-[10px] font-semibold tracking-[0.15em] opacity-40 mb-0.5">
+            {metric.label}
           </div>
-          {measureMs > 0 && (
-            <div className="text-[9px] font-mono opacity-35 tabular-nums">
-              {measureMs.toFixed(2)}ms
-            </div>
-          )}
+          <div className="text-2xl font-bold text-white mb-1">{metric.value}</div>
+          <span className={`text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded ${badgeClasses[metric.status]} inline-block mb-3`}>
+            {metric.badge}
+          </span>
+
+          {/* Live-rewrapped lines — each line is a discrete div */}
+          <div className="text-[13px] leading-[20px] opacity-80 mb-3">
+            {liveLines.map((line, i) => (
+              <div
+                key={i}
+                className="whitespace-nowrap border-b border-white/[0.04] py-[1px]"
+              >
+                {line}
+              </div>
+            ))}
+          </div>
+
+          {/* Metrics row */}
+          <div className="flex items-center gap-3 text-[9px] font-mono text-white/35 tabular-nums">
+            <span>{liveLineCount} {liveLineCount === 1 ? "line" : "lines"}</span>
+            <span className="text-white/15">·</span>
+            <span>maxW {liveMaxWidth}px</span>
+            {measureMs > 0 && (
+              <>
+                <span className="text-white/15">·</span>
+                <span>{measureMs.toFixed(2)}ms</span>
+              </>
+            )}
+            <span className="text-white/15">·</span>
+            <span className="text-white/20">pretext</span>
+          </div>
         </div>
       )}
     </div>
