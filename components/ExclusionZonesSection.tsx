@@ -24,22 +24,21 @@ interface FrameStats {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const CANVAS_W = 780;
-const CANVAS_H = 500;
-const TEXT_AREA_W = 480;
+const CANVAS_W = 760;
+const CANVAS_H = 480;
 const FONT = "15px system-ui";
-const LINE_HEIGHT = 22;
-const START_Y = 40;
-const LEFT_MARGIN = 20;
-const TEXT_MAX_W = TEXT_AREA_W - LEFT_MARGIN * 2;
+const LINE_HEIGHT = 24;
+const START_Y = 30;
+const LEFT_MARGIN = 18;
+const RIGHT_MARGIN = 18;
 
 const PARAGRAPH =
   "The key insight is that measuring character widths is a one-time cost. Once you have the widths cached, line-breaking becomes pure arithmetic. You walk the array, summing widths left to right. When the running sum exceeds your container width, you start a new line. No browser. No DOM. No reflow. Just addition. This makes it possible to know the exact layout of any text before a single pixel is painted — and to recompute that layout thousands of times per second without ever touching the document.";
 
 const INITIAL_BLOBS: Omit<Blob, "color">[] = [
-  { x: 120, y: 180, r: 45, vx: 0.4, vy: 0.3 },
-  { x: 300, y: 280, r: 60, vx: -0.35, vy: 0.5 },
-  { x: 200, y: 100, r: 35, vx: 0.5, vy: -0.4 },
+  { x: 160, y: 160, r: 42, vx: 0.45, vy: 0.35 },
+  { x: 520, y: 290, r: 55, vx: -0.3, vy: 0.45 },
+  { x: 350, y: 390, r: 34, vx: 0.5, vy: -0.38 },
 ];
 
 const BLOB_COLORS = [
@@ -127,24 +126,25 @@ export default function ExclusionZonesSection() {
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-      // Subtle right panel divider
-      ctx.strokeStyle = "rgba(255,255,255,0.06)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(TEXT_AREA_W, 0);
-      ctx.lineTo(TEXT_AREA_W, CANVAS_H);
-      ctx.stroke();
+      // subtle vignette edges
+      const vignette = ctx.createLinearGradient(0, 0, CANVAS_W, 0);
+      vignette.addColorStop(0, "rgba(0,0,0,0.3)");
+      vignette.addColorStop(0.1, "rgba(0,0,0,0)");
+      vignette.addColorStop(0.9, "rgba(0,0,0,0)");
+      vignette.addColorStop(1, "rgba(0,0,0,0.3)");
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-      // Move auto blobs & bounce
+      // Move auto blobs & bounce within full canvas
       const allBlobs = [...blobsRef.current];
       if (cursorActiveRef.current) allBlobs.push(cursorBlobRef.current);
 
       for (const blob of blobsRef.current) {
         blob.x += blob.vx;
         blob.y += blob.vy;
-        if (blob.x - blob.r < 0 || blob.x + blob.r > TEXT_AREA_W) blob.vx *= -1;
+        if (blob.x - blob.r < 0 || blob.x + blob.r > CANVAS_W) blob.vx *= -1;
         if (blob.y - blob.r < 0 || blob.y + blob.r > CANVAS_H) blob.vy *= -1;
-        blob.x = Math.max(blob.r, Math.min(TEXT_AREA_W - blob.r, blob.x));
+        blob.x = Math.max(blob.r, Math.min(CANVAS_W - blob.r, blob.x));
         blob.y = Math.max(blob.r, Math.min(CANVAS_H - blob.r, blob.y));
       }
 
@@ -160,149 +160,104 @@ export default function ExclusionZonesSection() {
         drawBlobGlow(ctx, blob);
       }
 
-      // Text layout
+      // Text layout — uses largest clear horizontal gap per line
       ctx.font = FONT;
-      ctx.fillStyle = "rgba(255,255,255,0.6)";
+      ctx.fillStyle = "rgba(255,255,255,0.82)";
 
       const lineWidths: number[] = [];
       let wordIndex = 0;
       let lineIndex = 0;
       let linesComputed = 0;
 
-      if (pt) {
-        while (wordIndex < words.length) {
-          const lineY = START_Y + lineIndex * LINE_HEIGHT;
-          if (lineY + LINE_HEIGHT > CANVAS_H) break;
+      // Greedy fill: fit as many words as possible into `maxW` using canvas measureText
+      function fitWords(from: number, maxW: number): { text: string; count: number } {
+        if (from >= words.length) return { text: "", count: 0 };
+        let text = words[from];
+        let count = 1;
+        while (from + count < words.length) {
+          const candidate = text + " " + words[from + count];
+          if (ctx.measureText(candidate).width > maxW) break;
+          text = candidate;
+          count++;
+        }
+        // Make sure even single word fits (clip if necessary)
+        if (ctx.measureText(text).width > maxW && count === 1) {
+          return { text, count: 1 }; // render anyway to avoid infinite loop
+        }
+        return { text, count };
+      }
 
-          const lineCenterY = lineY + LINE_HEIGHT / 2;
+      while (wordIndex < words.length) {
+        const lineY = START_Y + lineIndex * LINE_HEIGHT;
+        if (lineY + LINE_HEIGHT > CANVAS_H - 10) break;
 
-          // Find all blob intersections for this line band
-          let leftOffset = LEFT_MARGIN;
-          let rightOffset = TEXT_AREA_W - LEFT_MARGIN;
+        const lineCenterY = lineY + LINE_HEIGHT / 2;
 
-          const intersectingBlobs: { leftEdge: number; rightEdge: number }[] = [];
-
-          for (const blob of allBlobs) {
-            const dy = Math.abs(blob.y - lineCenterY);
-            if (dy < blob.r) {
-              const halfChord = Math.sqrt(blob.r * blob.r - dy * dy);
-              intersectingBlobs.push({
-                leftEdge: blob.x - halfChord,
-                rightEdge: blob.x + halfChord,
-              });
-            }
+        // Collect blocked ranges from all blobs intersecting this line band
+        const blocked: [number, number][] = [];
+        for (const blob of allBlobs) {
+          const dy = Math.abs(blob.y - lineCenterY);
+          if (dy < blob.r) {
+            const halfChord = Math.sqrt(blob.r * blob.r - dy * dy);
+            blocked.push([blob.x - halfChord - 4, blob.x + halfChord + 4]);
           }
+        }
 
-          // Simple approach: find rightmost right-edge among blobs whose left edge is near left margin
-          // and leftmost left-edge among blobs whose right edge is near right margin
-          // For simplicity: push text start past any blob that overlaps the left side,
-          // and shorten the line for blobs on the right side
-          let textStart = leftOffset;
-          let textEnd = rightOffset;
-
-          for (const seg of intersectingBlobs) {
-            // If blob overlaps the start region, push text start right
-            if (seg.leftEdge < textStart + 40) {
-              textStart = Math.max(textStart, seg.rightEdge + 4);
-            } else if (seg.rightEdge > textEnd - 40) {
-              // Blob on the right, shrink end
-              textEnd = Math.min(textEnd, seg.leftEdge - 4);
-            } else {
-              // Blob in the middle — push text start past it (simplification)
-              textStart = Math.max(textStart, seg.rightEdge + 4);
-            }
+        // Merge overlapping blocked ranges
+        blocked.sort((a, b) => a[0] - b[0]);
+        const merged: [number, number][] = [];
+        for (const seg of blocked) {
+          if (merged.length && seg[0] <= merged[merged.length - 1][1]) {
+            merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], seg[1]);
+          } else {
+            merged.push([...seg] as [number, number]);
           }
+        }
 
-          const effectiveWidth = Math.max(0, textEnd - textStart);
+        // Build clear segments between LEFT_MARGIN and CANVAS_W - RIGHT_MARGIN
+        const lineStart = LEFT_MARGIN;
+        const lineEnd = CANVAS_W - RIGHT_MARGIN;
+        const gaps: [number, number][] = [];
+        let cursor = lineStart;
+        for (const [bL, bR] of merged) {
+          if (bL > cursor) gaps.push([cursor, Math.min(bL, lineEnd)]);
+          cursor = Math.max(cursor, bR);
+        }
+        if (cursor < lineEnd) gaps.push([cursor, lineEnd]);
 
-          // Greedy line fill using pretext
-          let lineText = "";
-          let placed = 0;
+        // Find the widest gap
+        let bestGap: [number, number] = [lineStart, lineEnd];
+        let bestWidth = 0;
+        for (const gap of gaps) {
+          const w = gap[1] - gap[0];
+          if (w > bestWidth) { bestWidth = w; bestGap = gap; }
+        }
 
-          if (effectiveWidth > 20 && wordIndex < words.length) {
-            // Build candidate words
-            let testText = words[wordIndex];
-            let measured = 0;
+        const [gapStart, gapEnd] = bestGap;
+        const effectiveWidth = Math.max(0, gapEnd - gapStart);
 
-            try {
-              const prepared = pt.prepare(testText, FONT);
-              const result = pt.layout(prepared, effectiveWidth, LINE_HEIGHT);
-              measured = result.width;
-            } catch {
-              // fallback: skip word
-            }
-
-            if (measured <= effectiveWidth) {
-              lineText = testText;
-              placed = 1;
-
-              // Try adding more words
-              while (wordIndex + placed < words.length) {
-                const candidate = lineText + " " + words[wordIndex + placed];
-                let candidateWidth = 0;
-                try {
-                  const prep = pt.prepare(candidate, FONT);
-                  const res = pt.layout(prep, effectiveWidth, LINE_HEIGHT);
-                  candidateWidth = res.width;
-                } catch {
-                  break;
-                }
-                if (candidateWidth <= effectiveWidth) {
-                  lineText = candidate;
-                  placed++;
-                } else {
-                  break;
-                }
-              }
-            }
-          }
-
-          // Draw the line text
-          if (lineText) {
-            ctx.fillText(lineText, textStart, lineY + LINE_HEIGHT * 0.75);
+        let placed = 0;
+        if (effectiveWidth > 30) {
+          const { text, count } = fitWords(wordIndex, effectiveWidth);
+          if (text) {
+            ctx.fillText(text, gapStart, lineY + LINE_HEIGHT * 0.78);
             lineWidths.push(effectiveWidth);
             linesComputed++;
+            placed = count;
 
-            // Draw right margin indicator line
-            ctx.strokeStyle = "rgba(255,255,255,0.12)";
+            // Subtle right-edge tick
+            ctx.strokeStyle = "rgba(255,255,255,0.10)";
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(textStart + effectiveWidth, lineY + 2);
-            ctx.lineTo(textStart + effectiveWidth, lineY + LINE_HEIGHT - 2);
+            ctx.moveTo(gapEnd, lineY + 4);
+            ctx.lineTo(gapEnd, lineY + LINE_HEIGHT - 4);
             ctx.stroke();
-          } else if (wordIndex < words.length && effectiveWidth <= 20) {
-            // No room on this line due to blobs, skip line
-          } else {
-            // Nothing placed even with space — skip word to avoid infinite loop
-            if (wordIndex < words.length) {
-              ctx.fillText(words[wordIndex], textStart, lineY + LINE_HEIGHT * 0.75);
-              placed = 1;
-              linesComputed++;
-              lineWidths.push(effectiveWidth);
-            }
           }
+        }
 
-          wordIndex += placed;
-          lineIndex++;
-        }
-      } else {
-        // Fallback: plain text rendering before pretext loads
-        ctx.font = FONT;
-        ctx.fillStyle = "rgba(255,255,255,0.6)";
-        const fallbackWords = words.slice();
-        let fi = 0;
-        let li = 0;
-        while (fi < fallbackWords.length && li < 20) {
-          let line = "";
-          while (fi < fallbackWords.length) {
-            const test = line ? line + " " + fallbackWords[fi] : fallbackWords[fi];
-            if (ctx.measureText(test).width > TEXT_MAX_W) break;
-            line = test;
-            fi++;
-          }
-          ctx.fillText(line, LEFT_MARGIN, START_Y + li * LINE_HEIGHT + LINE_HEIGHT * 0.75);
-          li++;
-        }
+        // If no words placed on this line (blob totally blocking), still advance line
+        wordIndex += Math.max(placed, 0);
+        lineIndex++;
       }
 
       // Update stats (throttled to avoid too many React re-renders)
@@ -404,7 +359,7 @@ export default function ExclusionZonesSection() {
                     <div key={i} className="flex items-center gap-2">
                       <div
                         className="h-1 bg-amber-400/60 rounded-full"
-                        style={{ width: `${Math.round((w / TEXT_AREA_W) * 100)}%` }}
+                        style={{ width: `${Math.round((w / (CANVAS_W - LEFT_MARGIN - RIGHT_MARGIN)) * 100)}%` }}
                       />
                       <span className="text-white/40">{w}px</span>
                     </div>
