@@ -554,24 +554,6 @@ export default function TextTerrainSection() {
           <span className="text-green-400/70">{LINE_STEP}px higher</span>. Gaps between lines = jump zones.
         </div>
 
-        {/* Evaluation badge */}
-        <div className="mt-6 p-4 border border-white/10 rounded-xl bg-white/[0.02] flex flex-wrap gap-6 text-sm">
-          <span className="text-white/40">
-            Prompt: <span className="text-blue-400/70">Wrong Domain</span>
-          </span>
-          <span className="text-white/40">
-            Novelty: <span className="text-green-400">10/10</span>
-          </span>
-          <span className="text-white/40">
-            Stop-scroll: <span className="text-green-400">10/10</span>
-          </span>
-          <span className="text-white/40">
-            Pretext clarity: <span className="text-amber-400">7/10</span>
-          </span>
-          <span className="text-white/40">
-            Interactivity: <span className="text-green-400">10/10</span>
-          </span>
-        </div>
       </div>
     </section>
   );
