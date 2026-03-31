@@ -16,6 +16,11 @@ import SeismographSection from "@/components/SeismographSection";
 import TextTerrainSection from "@/components/TextTerrainSection";
 import PrecisionScrollSection from "@/components/PrecisionScrollSection";
 import FinMapSection from "@/components/FinMapSection";
+import ExclusionZonesSection from "@/components/ExclusionZonesSection";
+import ParagraphHeatmapSection from "@/components/ParagraphHeatmapSection";
+import CityFromTextSection from "@/components/CityFromTextSection";
+import TypographyScoreSection from "@/components/TypographyScoreSection";
+import SpecimenSheetSection from "@/components/SpecimenSheetSection";
 
 export default function Home() {
   return (
@@ -98,6 +103,31 @@ export default function Home() {
       {/* Fintech FinMap experiment */}
       <div id="finmap">
         <FinMapSection />
+      </div>
+
+      {/* Exclusion Zones — text flows around floating blobs in real time */}
+      <div id="exclusion">
+        <ExclusionZonesSection />
+      </div>
+
+      {/* Paragraph Heatmap — thermal overlay showing line density */}
+      <div id="heatmap">
+        <ParagraphHeatmapSection />
+      </div>
+
+      {/* City From Text — urban planner powered by pretext word widths */}
+      <div id="city">
+        <CityFromTextSection />
+      </div>
+
+      {/* Typography Score — character widths as sheet music */}
+      <div id="typography-score">
+        <TypographyScoreSection />
+      </div>
+
+      {/* Specimen Sheet — 7 font sizes, draggable measure, break alignment */}
+      <div id="specimen">
+        <SpecimenSheetSection />
       </div>
 
       {/* About + install */}
