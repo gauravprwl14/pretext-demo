@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { motion } from "framer-motion";
 
 type MetricStatus = "healthy" | "caution" | "danger" | "info";
 
@@ -244,7 +244,7 @@ function FinTile({
 }) {
   const tileRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
-  const [mouseX, setMouseX] = useState(0);         // 0..1 ratio across tile width
+  const [mouseX, setMouseX] = useState(0);
   const [liveLines, setLiveLines] = useState<string[]>([]);
   const [liveMaxWidth, setLiveMaxWidth] = useState(0);
   const [liveLineCount, setLiveLineCount] = useState(0);
@@ -331,110 +331,75 @@ function FinTile({
   }, []);
 
   return (
-    // outer wrapper: overflow-visible so the floating panel escapes the grid cell
-    <div className="relative h-full" style={{ overflow: "visible" }}>
-      {/* The tile itself — static content only, no text clipping issues */}
-      <div
-        ref={tileRef}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className={`h-full p-4 rounded-xl border relative overflow-hidden cursor-crosshair select-none transition-all duration-150 ${colorClasses[metric.status]} ${hovered ? "border-white/20 ring-1 ring-white/10" : ""}`}
-      >
-        {/* Cursor line inside tile */}
-        {hovered && (
-          <div
-            className={`absolute top-0 bottom-0 w-px opacity-40 pointer-events-none z-10 ${cursorLineColors[metric.status]}`}
-            style={{ left: `${mouseX * 100}%` }}
-          />
-        )}
+    <div
+      ref={tileRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`relative p-4 rounded-xl border cursor-crosshair select-none transition-all duration-150 ${colorClasses[metric.status]} ${hovered ? "border-white/25 shadow-lg" : ""}`}
+      style={{ breakInside: "avoid" }}
+    >
+      {/* Cursor tracking line */}
+      {hovered && (
+        <div
+          className={`absolute top-0 bottom-0 w-px opacity-30 pointer-events-none ${cursorLineColors[metric.status]}`}
+          style={{ left: `${mouseX * 100}%` }}
+        />
+      )}
 
-        {/* Label */}
-        <div className="text-[10px] font-semibold tracking-[0.15em] opacity-60 mb-1">
-          {metric.label}
-        </div>
-
-        {/* Value */}
-        <div className="text-3xl font-bold text-white mb-0.5">{metric.value}</div>
-
-        {/* Unit */}
-        {metric.unit && (
-          <div className="text-xs opacity-50 mb-1">{metric.unit}</div>
-        )}
-
-        {/* Badge */}
-        <span
-          className={`text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded ${badgeClasses[metric.status]} inline-block`}
-        >
-          {metric.badge}
-        </span>
-
-        {/* Static description — shown when NOT hovered */}
-        {!hovered && (
-          <p className="text-[12px] leading-relaxed opacity-50 mt-2 line-clamp-3">
-            {metric.description}
-          </p>
-        )}
-
-        {/* Ref — shown when not hovered */}
-        {metric.ref && !hovered && (
-          <div className="text-[10px] opacity-25 mt-1">{metric.ref}</div>
-        )}
+      {/* Label */}
+      <div className="text-[10px] font-semibold tracking-[0.15em] opacity-60 mb-1">
+        {metric.label}
       </div>
 
-      {/* Floating overlay panel — escapes tile height, shows live pretext reflow */}
-      {hovered && liveLines.length > 0 && (
-        <div
-          className={`absolute left-0 right-0 z-50 p-4 rounded-xl border pointer-events-none ${colorClasses[metric.status]} border-white/20 shadow-2xl`}
-          style={{ top: 0 }}
-        >
+      {/* Value */}
+      <div className="text-3xl font-bold text-white mb-1">{metric.value}</div>
+
+      {/* Badge */}
+      <span className={`text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded ${badgeClasses[metric.status]} inline-block mb-3`}>
+        {metric.badge}
+      </span>
+
+      {/* Description — live pretext lines on hover, plain text at rest */}
+      {hovered && liveLines.length > 0 ? (
+        <>
           {/* maxWidth ruler */}
-          <div className="relative h-[2px] mb-3 rounded-full bg-white/[0.06]">
+          <div className="relative h-[2px] mb-2 rounded-full bg-white/[0.07]">
             <div
-              className="absolute left-0 top-0 h-full rounded-full bg-white/30 transition-all duration-75"
-              style={{ width: `${(liveMaxWidth / 260) * 100}%`, maxWidth: "100%" }}
+              className="absolute left-0 top-0 h-full rounded-full bg-white/25"
+              style={{ width: `${Math.min(100, (liveMaxWidth / 260) * 100)}%` }}
             />
-            <div className="absolute right-0 top-[-10px] text-[9px] font-mono text-white/30 tabular-nums">
-              {liveMaxWidth}px
-            </div>
           </div>
-
-          {/* Label + value repeated for context */}
-          <div className="text-[10px] font-semibold tracking-[0.15em] opacity-40 mb-0.5">
-            {metric.label}
-          </div>
-          <div className="text-2xl font-bold text-white mb-1">{metric.value}</div>
-          <span className={`text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded ${badgeClasses[metric.status]} inline-block mb-3`}>
-            {metric.badge}
-          </span>
-
-          {/* Live-rewrapped lines — each line is a discrete div */}
-          <div className="text-[13px] leading-[20px] opacity-80 mb-3">
+          {/* Live-rewrapped lines */}
+          <div className="text-[13px] leading-[20px] opacity-75 mb-2">
             {liveLines.map((line, i) => (
-              <div
-                key={i}
-                className="whitespace-nowrap border-b border-white/[0.04] py-[1px]"
-              >
+              <div key={i} className="whitespace-nowrap border-b border-white/[0.04] py-px">
                 {line}
               </div>
             ))}
           </div>
-
-          {/* Metrics row */}
-          <div className="flex items-center gap-3 text-[9px] font-mono text-white/35 tabular-nums">
-            <span>{liveLineCount} {liveLineCount === 1 ? "line" : "lines"}</span>
-            <span className="text-white/15">·</span>
-            <span>maxW {liveMaxWidth}px</span>
+          {/* Metrics */}
+          <div className="flex items-center gap-2 text-[9px] font-mono text-white/30 tabular-nums mt-1">
+            <span>{liveLineCount}L</span>
+            <span className="text-white/10">·</span>
+            <span>{liveMaxWidth}px</span>
             {measureMs > 0 && (
               <>
-                <span className="text-white/15">·</span>
+                <span className="text-white/10">·</span>
                 <span>{measureMs.toFixed(2)}ms</span>
               </>
             )}
-            <span className="text-white/15">·</span>
-            <span className="text-white/20">pretext</span>
           </div>
-        </div>
+        </>
+      ) : (
+        <>
+          <p className="text-[12px] leading-relaxed opacity-55">
+            {metric.description}
+          </p>
+          {metric.ref && (
+            <div className="text-[10px] opacity-25 mt-2">{metric.ref}</div>
+          )}
+        </>
       )}
     </div>
   );
@@ -442,31 +407,21 @@ function FinTile({
 
 // --- Main component ---
 
-const containerVariants: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.04 } },
-};
-
-const tileVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.95, y: 8 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { duration: 0.3, ease: "easeOut" as const },
-  },
-};
-
 export default function FinMapSection() {
   const [activeProfile, setActiveProfile] = useState<string>(PROFILE_NAMES[0]);
   const [pretextMod, setPretextMod] = useState<PretextModule | null>(null);
+  const [key, setKey] = useState(0);
 
-  // Load pretext once
   useEffect(() => {
     import("@chenglou/pretext")
       .then((mod) => setPretextMod(mod as PretextModule))
       .catch(() => setPretextMod(null));
   }, []);
+
+  const handleProfileChange = (name: string) => {
+    setActiveProfile(name);
+    setKey((k) => k + 1); // remount masonry on profile switch
+  };
 
   const metrics = PROFILES[activeProfile];
 
@@ -474,7 +429,7 @@ export default function FinMapSection() {
     <section className="py-16 px-6 bg-black border-t border-white/[0.06]">
       <div className="max-w-6xl mx-auto">
 
-        {/* Compact title bar — left: label + title, right: profile switcher */}
+        {/* Compact title bar */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -491,12 +446,11 @@ export default function FinMapSection() {
               ↔ drag cursor across any tile
             </span>
           </div>
-
           <div className="flex gap-1.5">
             {PROFILE_NAMES.map((name) => (
               <button
                 key={name}
-                onClick={() => setActiveProfile(name)}
+                onClick={() => handleProfileChange(name)}
                 className={`px-3 py-1 rounded-md text-[11px] font-semibold tracking-wide border transition-all duration-200 ${
                   activeProfile === name
                     ? "bg-white/10 border-white/20 text-white"
@@ -509,37 +463,33 @@ export default function FinMapSection() {
           </div>
         </motion.div>
 
-        {/* Mosaic grid — fixed row height eliminates gaps */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeProfile}
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid gap-2"
-            style={{
-              gridTemplateColumns: "repeat(4, 1fr)",
-              gridAutoRows: "160px",
-            }}
-          >
-            {metrics.map((metric) => (
-              <motion.div
-                key={metric.id}
-                variants={tileVariants}
-                style={{
-                  gridColumn: `span ${metric.cols}`,
-                  gridRow: `span ${metric.rows}`,
-                }}
-              >
-                <FinTile metric={metric} pretextMod={pretextMod} />
-              </motion.div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
+        {/* Masonry — CSS columns, cards flow naturally by content height */}
+        <motion.div
+          key={key}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          style={{
+            columns: "4",
+            columnGap: "8px",
+          }}
+        >
+          {metrics.map((metric, i) => (
+            <motion.div
+              key={metric.id}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, delay: i * 0.03 }}
+              style={{ marginBottom: "8px", breakInside: "avoid" }}
+            >
+              <FinTile metric={metric} pretextMod={pretextMod} />
+            </motion.div>
+          ))}
+        </motion.div>
 
         {/* Footer */}
-        <div className="mt-3 flex items-center gap-2 text-[10px] text-white/20">
-          <span>Mouse X → maxWidth → pretext layout → 0 DOM reflows</span>
+        <div className="mt-3 text-[10px] text-white/20">
+          Mouse X → maxWidth → pretext layout → 0 DOM reflows
         </div>
       </div>
     </section>
