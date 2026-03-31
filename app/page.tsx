@@ -15,6 +15,7 @@ import PredictiveGhostSection from "@/components/PredictiveGhostSection";
 import SeismographSection from "@/components/SeismographSection";
 import TextTerrainSection from "@/components/TextTerrainSection";
 import PrecisionScrollSection from "@/components/PrecisionScrollSection";
+import FinMapSection from "@/components/FinMapSection";
 
 export default function Home() {
   return (
@@ -92,6 +93,11 @@ export default function Home() {
       {/* 15. Precision Scroll — 10,000 items, pre-computed heights, zero DOM measurement */}
       <div id="precision-scroll">
         <PrecisionScrollSection />
+      </div>
+
+      {/* Fintech FinMap experiment */}
+      <div id="finmap">
+        <FinMapSection />
       </div>
 
       {/* About + install */}
