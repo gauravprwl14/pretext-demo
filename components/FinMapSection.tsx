@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 
 type MetricStatus = "healthy" | "caution" | "danger" | "info";
@@ -16,10 +16,6 @@ type Metric = {
   ref?: string;
   cols: number;
   rows: number;
-};
-
-type MeasuredMetric = Metric & {
-  textAdjusted: boolean;
 };
 
 // --- Profile data ---
@@ -206,9 +202,7 @@ const PROFILES: Record<string, Metric[]> = {
   "Wealth Building": buildWealth(PROFILE_STRONG),
 };
 
-const PROFILE_NAMES = Object.keys(PROFILES) as (keyof typeof PROFILES)[];
-
-// --- Color maps ---
+const PROFILE_NAMES = Object.keys(PROFILES) as string[];
 
 const colorClasses: Record<MetricStatus, string> = {
   healthy: "bg-emerald-950/60 border-emerald-800/40",
@@ -224,93 +218,242 @@ const badgeClasses: Record<MetricStatus, string> = {
   info: "bg-blue-900/80 text-blue-300",
 };
 
-// --- Grid config ---
-const GRID_COLS = 4;
-const COL_UNIT_PX = 156; // approx px per grid column unit in a ~680px wide grid
-const GAP_PX = 8;
-const TILE_PADDING = 32; // 16px each side
-const LINE_HEIGHT = 18;
+const cursorLineColors: Record<MetricStatus, string> = {
+  healthy: "bg-emerald-400/50",
+  caution: "bg-amber-400/50",
+  danger: "bg-red-400/50",
+  info: "bg-blue-400/50",
+};
 
-function maxLinesForRows(rows: number): number {
-  // 1 row tile: ~80px content area, 2 rows: ~190px, 3 rows: ~300px
-  // subtract label (~14px), value (~44px), badge (~22px), ref (~16px), gaps (~20px)
-  const ROW_UNIT_PX = 120;
-  const contentPx = rows * ROW_UNIT_PX - 116;
-  return Math.max(2, Math.floor(contentPx / LINE_HEIGHT));
+const LINE_HEIGHT = 18;
+const PADDING = 32;
+
+// Split text into lines at a given maxWidth using pretext
+type PretextModule = {
+  prepare: (text: string, font: string) => unknown;
+  layout: (p: unknown, maxWidth: number, lineHeight: number) => { lineCount: number; height: number };
+};
+
+// Tile with live mouse-driven pretext layout
+function FinTile({
+  metric,
+  pretextMod,
+}: {
+  metric: Metric;
+  pretextMod: PretextModule | null;
+}) {
+  const tileRef = useRef<HTMLDivElement>(null);
+  const [hovered, setHovered] = useState(false);
+  const [mouseX, setMouseX] = useState(0);         // 0..1 ratio across tile width
+  const [liveLines, setLiveLines] = useState<string[]>([]);
+  const [liveMaxWidth, setLiveMaxWidth] = useState(0);
+  const [liveLineCount, setLiveLineCount] = useState(0);
+  const [measureMs, setMeasureMs] = useState(0);
+
+  // Split description into lines using pretext at a given maxWidth
+  const computeLines = useCallback(
+    (maxW: number): { lines: string[]; lineCount: number; ms: number } => {
+      if (!pretextMod) {
+        // Fallback: rough word-wrap
+        const words = metric.description.split(" ");
+        const charsPerLine = Math.max(10, Math.floor(maxW / 7));
+        const lines: string[] = [];
+        let current = "";
+        for (const word of words) {
+          if ((current + " " + word).trim().length > charsPerLine) {
+            if (current) lines.push(current);
+            current = word;
+          } else {
+            current = current ? current + " " + word : word;
+          }
+        }
+        if (current) lines.push(current);
+        return { lines, lineCount: lines.length, ms: 0 };
+      }
+
+      const t0 = performance.now();
+      const { prepare, layout } = pretextMod;
+
+      // Build lines by binary-searching word boundaries
+      const words = metric.description.split(" ");
+      const lines: string[] = [];
+      let start = 0;
+
+      while (start < words.length) {
+        // Find the longest prefix of words[start..] that fits in maxW
+        let lo = start;
+        let hi = words.length;
+        while (lo + 1 < hi) {
+          const mid = (lo + hi) >> 1;
+          const candidate = words.slice(start, mid + 1).join(" ");
+          const p = prepare(candidate, "13px system-ui");
+          const result = layout(p, maxW, LINE_HEIGHT);
+          if (result.lineCount <= 1) lo = mid;
+          else hi = mid;
+        }
+        lines.push(words.slice(start, lo + 1).join(" "));
+        start = lo + 1;
+      }
+
+      const ms = performance.now() - t0;
+      return { lines, lineCount: lines.length, ms };
+    },
+    [pretextMod, metric.description]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!tileRef.current) return;
+      const rect = tileRef.current.getBoundingClientRect();
+      const ratio = Math.max(0.1, Math.min(1, (e.clientX - rect.left) / rect.width));
+      const maxW = Math.max(40, ratio * (rect.width - PADDING));
+
+      const { lines, lineCount, ms } = computeLines(maxW);
+      setMouseX(ratio);
+      setLiveLines(lines);
+      setLiveMaxWidth(Math.round(maxW));
+      setLiveLineCount(lineCount);
+      setMeasureMs(ms);
+    },
+    [computeLines]
+  );
+
+  const handleMouseEnter = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      setHovered(true);
+      handleMouseMove(e);
+    },
+    [handleMouseMove]
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    setHovered(false);
+  }, []);
+
+  return (
+    <div
+      ref={tileRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        gridColumn: `span ${metric.cols}`,
+        gridRow: `span ${metric.rows}`,
+      }}
+      className={`p-4 rounded-xl border relative overflow-hidden cursor-crosshair select-none transition-all duration-150 ${colorClasses[metric.status]} ${hovered ? "border-white/20" : ""}`}
+    >
+      {/* Live cursor line — follows mouse X */}
+      {hovered && (
+        <div
+          className={`absolute top-0 bottom-0 w-px opacity-60 pointer-events-none z-10 ${cursorLineColors[metric.status]}`}
+          style={{ left: `${mouseX * 100}%` }}
+        />
+      )}
+
+      {/* maxWidth bracket indicator */}
+      {hovered && (
+        <div
+          className="absolute top-0 h-[2px] pointer-events-none z-10 opacity-40"
+          style={{
+            left: PADDING / 2,
+            width: liveMaxWidth,
+            background: "currentColor",
+          }}
+        />
+      )}
+
+      {/* Label */}
+      <div className="text-[10px] font-semibold tracking-[0.15em] opacity-60 mb-1">
+        {metric.label}
+      </div>
+
+      {/* Value */}
+      <div className="text-3xl font-bold text-white mb-0.5">{metric.value}</div>
+
+      {/* Unit */}
+      {metric.unit && (
+        <div className="text-xs opacity-50 mb-2">{metric.unit}</div>
+      )}
+
+      {/* Badge */}
+      <span
+        className={`text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded ${badgeClasses[metric.status]} mb-2 inline-block`}
+      >
+        {metric.badge}
+      </span>
+
+      {/* Description — live pretext lines when hovered, plain paragraph otherwise */}
+      {hovered && liveLines.length > 0 ? (
+        <div className="text-[13px] leading-[18px] opacity-70">
+          {liveLines.map((line, i) => (
+            <div key={i} className="whitespace-nowrap overflow-hidden text-ellipsis">
+              {line}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-[13px] leading-relaxed opacity-70">
+          {metric.description}
+        </p>
+      )}
+
+      {/* Ref */}
+      {metric.ref && !hovered && (
+        <div className="text-[10px] opacity-30 mt-2">{metric.ref}</div>
+      )}
+
+      {/* Live metrics overlay — shown on hover */}
+      {hovered && (
+        <div className="absolute bottom-2 right-2 flex flex-col items-end gap-0.5 pointer-events-none">
+          <div className="text-[9px] font-mono opacity-50 tabular-nums">
+            maxW {liveMaxWidth}px
+          </div>
+          <div className="text-[9px] font-mono opacity-50 tabular-nums">
+            {liveLineCount} {liveLineCount === 1 ? "line" : "lines"}
+          </div>
+          {measureMs > 0 && (
+            <div className="text-[9px] font-mono opacity-35 tabular-nums">
+              {measureMs.toFixed(2)}ms
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // --- Main component ---
 
+const containerVariants: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.04 } },
+};
+
+const tileVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.95, y: 8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: 0.3, ease: "easeOut" as const },
+  },
+};
+
 export default function FinMapSection() {
   const [activeProfile, setActiveProfile] = useState<string>(PROFILE_NAMES[0]);
-  const [measuredMetrics, setMeasuredMetrics] = useState<MeasuredMetric[]>([]);
-  const [adjustedCount, setAdjustedCount] = useState(0);
+  const [pretextMod, setPretextMod] = useState<PretextModule | null>(null);
 
+  // Load pretext once
   useEffect(() => {
-    const metrics = PROFILES[activeProfile];
+    import("@chenglou/pretext")
+      .then((mod) => setPretextMod(mod as PretextModule))
+      .catch(() => setPretextMod(null));
+  }, []);
 
-    async function measure() {
-      let layoutFn: (
-        text: string,
-        maxW: number,
-        maxLines: number
-      ) => boolean;
-
-      try {
-        const mod = await import("@chenglou/pretext");
-        const { prepare, layout } = mod;
-        layoutFn = (text, maxW, maxLines) => {
-          const p = prepare(text, "13px system-ui");
-          const result = layout(p, maxW, LINE_HEIGHT);
-          return result.lineCount > maxLines;
-        };
-      } catch {
-        // Fallback: rough char-based estimate
-        layoutFn = (text, maxW, maxLines) => {
-          const charsPerLine = Math.floor(maxW / (13 * 0.53));
-          const lines = Math.ceil(text.length / charsPerLine);
-          return lines > maxLines;
-        };
-      }
-
-      let adjusted = 0;
-      const result: MeasuredMetric[] = metrics.map((m) => {
-        const tileContentWidth =
-          m.cols * COL_UNIT_PX + (m.cols - 1) * GAP_PX - TILE_PADDING;
-        const maxLines = maxLinesForRows(m.rows);
-        const textAdjusted = layoutFn(m.description, tileContentWidth, maxLines);
-        if (textAdjusted) adjusted++;
-        return { ...m, textAdjusted };
-      });
-
-      setMeasuredMetrics(result);
-      setAdjustedCount(adjusted);
-    }
-
-    measure();
-  }, [activeProfile]);
-
-  const containerVariants: Variants = {
-    hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: 0.04,
-      },
-    },
-  };
-
-  const tileVariants: Variants = {
-    hidden: { opacity: 0, scale: 0.95, y: 8 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: { duration: 0.3, ease: "easeOut" as const },
-    },
-  };
+  const metrics = PROFILES[activeProfile];
 
   return (
-    <section className="py-24 px-6 bg-black border-t border-white/10">
+    <section className="py-24 px-6 bg-black border-t border-white/[0.06]">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
@@ -325,9 +468,12 @@ export default function FinMapSection() {
           </div>
           <h2 className="text-3xl font-semibold text-white mb-2">FinMap</h2>
           <p className="text-white/40 text-sm max-w-xl">
-            A mosaic of your financial vitals. Tile sizes reflect importance.
-            Pretext measures every description before render — no reflow, no
-            jank, perfect text fit across every tile size.
+            A mosaic of financial vitals. Move your cursor across any tile —
+            pretext recomputes line breaks live at your mouse position.
+            No DOM. No reflow. Pure arithmetic.
+          </p>
+          <p className="text-white/25 text-xs mt-2">
+            Mouse X → maxWidth → pretext layout → line breaks update at 60fps
           </p>
         </motion.div>
 
@@ -362,11 +508,9 @@ export default function FinMapSection() {
             initial="hidden"
             animate="visible"
             className="grid gap-2"
-            style={{
-              gridTemplateColumns: `repeat(${GRID_COLS}, 1fr)`,
-            }}
+            style={{ gridTemplateColumns: "repeat(4, 1fr)" }}
           >
-            {measuredMetrics.map((metric) => (
+            {metrics.map((metric) => (
               <motion.div
                 key={metric.id}
                 variants={tileVariants}
@@ -374,75 +518,20 @@ export default function FinMapSection() {
                   gridColumn: `span ${metric.cols}`,
                   gridRow: `span ${metric.rows}`,
                 }}
-                className={`p-4 rounded-xl border relative overflow-hidden ${colorClasses[metric.status]}`}
               >
-                {/* Label */}
-                <div className="text-[10px] font-semibold tracking-[0.15em] opacity-60 mb-1">
-                  {metric.label}
-                </div>
-
-                {/* Value */}
-                <div className="text-3xl font-bold text-white mb-0.5">
-                  {metric.value}
-                </div>
-
-                {/* Unit */}
-                {metric.unit && (
-                  <div className="text-xs opacity-50 mb-2">{metric.unit}</div>
-                )}
-
-                {/* Badge */}
-                <span
-                  className={`text-[9px] font-bold tracking-widest px-1.5 py-0.5 rounded ${badgeClasses[metric.status]} mb-2 inline-block`}
-                >
-                  {metric.badge}
-                </span>
-
-                {/* Description */}
-                <p
-                  className={`leading-relaxed opacity-70 ${
-                    metric.textAdjusted ? "text-[11px]" : "text-[13px]"
-                  }`}
-                >
-                  {metric.description}
-                </p>
-
-                {/* Ref */}
-                {metric.ref && (
-                  <div className="text-[10px] opacity-30 mt-2">{metric.ref}</div>
-                )}
-
-                {/* Pretext adjustment indicator */}
-                {metric.textAdjusted && (
-                  <span
-                    className="absolute top-2 right-2 text-[10px] opacity-20"
-                    title="font adjusted by pretext"
-                  >
-                    ⌖
-                  </span>
-                )}
+                <FinTile metric={metric} pretextMod={pretextMod} />
               </motion.div>
             ))}
           </motion.div>
         </AnimatePresence>
 
-        {/* Footer note */}
-        {measuredMetrics.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-4 flex items-center gap-2 text-[11px] text-white/25"
-          >
-            <span>⌖</span>
-            <span>
-              Text fit measured by{" "}
-              <span className="text-white/40">pretext</span> —{" "}
-              {adjustedCount} of {measuredMetrics.length} tiles font-adjusted.
-              0 DOM reflows.
-            </span>
-          </motion.div>
-        )}
+        {/* Footer */}
+        <div className="mt-4 flex items-center gap-2 text-[11px] text-white/20">
+          <span>↔</span>
+          <span>
+            Move cursor left/right across any tile to reshape text with pretext in real time
+          </span>
+        </div>
       </div>
     </section>
   );
