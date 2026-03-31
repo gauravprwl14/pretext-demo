@@ -15,7 +15,6 @@ import PredictiveGhostSection from "@/components/PredictiveGhostSection";
 import SeismographSection from "@/components/SeismographSection";
 import TextTerrainSection from "@/components/TextTerrainSection";
 import PrecisionScrollSection from "@/components/PrecisionScrollSection";
-import ExperimentLeaderboardSection from "@/components/ExperimentLeaderboardSection";
 
 export default function Home() {
   return (
@@ -93,11 +92,6 @@ export default function Home() {
       {/* 15. Precision Scroll — 10,000 items, pre-computed heights, zero DOM measurement */}
       <div id="precision-scroll">
         <PrecisionScrollSection />
-      </div>
-
-      {/* 16. Experiment Leaderboard — rated demos + winning prompt formula */}
-      <div id="experiments">
-        <ExperimentLeaderboardSection />
       </div>
 
       {/* About + install */}
