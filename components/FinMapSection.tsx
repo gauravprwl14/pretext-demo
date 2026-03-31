@@ -336,11 +336,7 @@ function FinTile({
       onMouseMove={handleMouseMove}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      style={{
-        gridColumn: `span ${metric.cols}`,
-        gridRow: `span ${metric.rows}`,
-      }}
-      className={`p-4 rounded-xl border relative overflow-hidden cursor-crosshair select-none transition-all duration-150 ${colorClasses[metric.status]} ${hovered ? "border-white/20" : ""}`}
+      className={`h-full p-4 rounded-xl border relative overflow-hidden cursor-crosshair select-none transition-all duration-150 ${colorClasses[metric.status]} ${hovered ? "border-white/20" : ""}`}
     >
       {/* Live cursor line — follows mouse X */}
       {hovered && (
@@ -453,54 +449,45 @@ export default function FinMapSection() {
   const metrics = PROFILES[activeProfile];
 
   return (
-    <section className="py-24 px-6 bg-black border-t border-white/[0.06]">
+    <section className="py-16 px-6 bg-black border-t border-white/[0.06]">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
+
+        {/* Compact title bar — left: label + title, right: profile switcher */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mb-8"
+          transition={{ duration: 0.5 }}
+          className="flex items-center justify-between mb-4"
         >
-          <div className="text-[10px] tracking-widest text-white/30 uppercase mb-3">
-            Experiment · Fintech
+          <div className="flex items-baseline gap-3">
+            <span className="text-[10px] tracking-widest text-white/25 uppercase">
+              Experiment · Fintech
+            </span>
+            <h2 className="text-lg font-semibold text-white">FinMap</h2>
+            <span className="text-white/25 text-xs hidden sm:inline">
+              ↔ drag cursor across any tile
+            </span>
           </div>
-          <h2 className="text-3xl font-semibold text-white mb-2">FinMap</h2>
-          <p className="text-white/40 text-sm max-w-xl">
-            A mosaic of financial vitals. Move your cursor across any tile —
-            pretext recomputes line breaks live at your mouse position.
-            No DOM. No reflow. Pure arithmetic.
-          </p>
-          <p className="text-white/25 text-xs mt-2">
-            Mouse X → maxWidth → pretext layout → line breaks update at 60fps
-          </p>
+
+          <div className="flex gap-1.5">
+            {PROFILE_NAMES.map((name) => (
+              <button
+                key={name}
+                onClick={() => setActiveProfile(name)}
+                className={`px-3 py-1 rounded-md text-[11px] font-semibold tracking-wide border transition-all duration-200 ${
+                  activeProfile === name
+                    ? "bg-white/10 border-white/20 text-white"
+                    : "bg-white/0 border-white/[0.08] text-white/35 hover:text-white/60 hover:border-white/20"
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
         </motion.div>
 
-        {/* Profile switcher */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="flex gap-2 mb-6"
-        >
-          {PROFILE_NAMES.map((name) => (
-            <button
-              key={name}
-              onClick={() => setActiveProfile(name)}
-              className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold tracking-wide border transition-all duration-200 ${
-                activeProfile === name
-                  ? "bg-white/10 border-white/20 text-white"
-                  : "bg-white/0 border-white/10 text-white/40 hover:text-white/60 hover:border-white/20"
-              }`}
-            >
-              {name}
-            </button>
-          ))}
-        </motion.div>
-
-        {/* Mosaic grid */}
+        {/* Mosaic grid — fixed row height eliminates gaps */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeProfile}
@@ -508,7 +495,10 @@ export default function FinMapSection() {
             initial="hidden"
             animate="visible"
             className="grid gap-2"
-            style={{ gridTemplateColumns: "repeat(4, 1fr)" }}
+            style={{
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gridAutoRows: "160px",
+            }}
           >
             {metrics.map((metric) => (
               <motion.div
@@ -526,11 +516,8 @@ export default function FinMapSection() {
         </AnimatePresence>
 
         {/* Footer */}
-        <div className="mt-4 flex items-center gap-2 text-[11px] text-white/20">
-          <span>↔</span>
-          <span>
-            Move cursor left/right across any tile to reshape text with pretext in real time
-          </span>
+        <div className="mt-3 flex items-center gap-2 text-[10px] text-white/20">
+          <span>Mouse X → maxWidth → pretext layout → 0 DOM reflows</span>
         </div>
       </div>
     </section>
